@@ -53,7 +53,7 @@
   <ItemGroup>
     <Compile Include="Base\Entity\BaseEntity.cs" />
     <Compile Include="Base\Entity\IEntity.cs" />
-    <Compile Include="Base\Repository\BaseRepository.cs" />
+    <Compile Include="Base\Repository\IBaseRepository.cs" />
     <Compile Include="Base\Repository\DefaultRepository.cs" />
     <Compile Include="Base\Repository\IRepository.cs" />
     <Compile Include="Base\Util\PaginatedList.cs" />
