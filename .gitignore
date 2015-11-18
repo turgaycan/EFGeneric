@@ -1,3 +1,9 @@
+*packages
+*bin
+*obj
+*.obj
+*.packages
+*.bin
 *.class
 
 # Mobile Tools for Java (J2ME)
