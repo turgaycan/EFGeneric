@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
-using EFGeneric.Base.Entity;
 
 namespace EFGeneric.Base.Repository
 {
 
-    public interface IBaseRepository<T> : IDisposable where T : BaseEntity
+    public interface IBaseRepository<T> : IDisposable
     {
         IQueryable<T> All { get; }
 

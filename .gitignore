@@ -16,3 +16,7 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+EFGeneric.v12.suo
+EFGeneric/Base/Entity/IEntity.cs~RF164ec21b.TMP
+EFGeneric/EFGeneric.csproj.DotSettings
+EFGeneric/Repository/AbstractRepository.cs~RF15b0c5df.TMP

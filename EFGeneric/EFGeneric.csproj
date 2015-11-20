@@ -54,24 +54,17 @@
     <Compile Include="Base\Entity\BaseEntity.cs" />
     <Compile Include="Base\Entity\IEntity.cs" />
     <Compile Include="Base\Repository\IBaseRepository.cs" />
-    <Compile Include="Base\Repository\DefaultRepository.cs" />
-    <Compile Include="Base\Repository\IRepository.cs" />
     <Compile Include="Base\Util\PaginatedList.cs" />
     <Compile Include="Base\Util\QueryableExtensions.cs" />
     <Compile Include="Context\EntityContext.cs" />
     <Compile Include="Context\IEntityContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\AbstractRepository.cs" />
-    <Compile Include="Repository\Base\IDefaultEntityRepository.cs" />
-    <Compile Include="Repository\Base\IEntityRepository.cs" />
     <Compile Include="Repository\Model\OrderByType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

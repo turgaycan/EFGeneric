@@ -1,12 +1,9 @@
-﻿
-using System;
+﻿using System;
 
-namespace EFGeneric.Base.Entity {
-    
-    /// <summary>
-    /// Default entity, parameterized by long (db type -> bigint)
-    /// </summary>
-    public abstract class BaseEntity : IEntity<long> {
-        public virtual long Id { get; set; }
+namespace EFGeneric.Base.Entity
+{
+    public abstract class BaseEntity<TId> where TId : IComparable
+    {
+        public virtual TId Id { get; set; }
     }
 }

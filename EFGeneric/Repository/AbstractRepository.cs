@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Data.Entity;
-using System.Data.Entity.Core;
 using System.Linq;
 using System.Linq.Expressions;
-using EFGeneric.Base.Entity;
 using EFGeneric.Base.Repository;
 
 namespace EFGeneric.Repository
@@ -13,9 +11,10 @@ namespace EFGeneric.Repository
     /// </summary>
     /// <typeparam name="C">Db/Object Context</typeparam>
     /// <typeparam name="T">Entity</typeparam>
+    /// <typeparam name="TId">Id (BigInt, Int)</typeparam>
     public abstract class AbstractRepository<C, T> : IBaseRepository<T>, IDisposable
         where C : DbContext, new()
-        where T : BaseEntity
+        where T : class
     {
         private C _entities = Activator.CreateInstance<C>();
         private bool disposed = false;
@@ -38,6 +37,11 @@ namespace EFGeneric.Repository
             {
                 return GetAll();
             }
+        }
+
+        public virtual T FindById(object id)
+        {
+            return GetAll().SingleOrDefault(entity => entity.Equals(id));
         }
 
         public virtual IQueryable<T> AllIncluding(params Expression<Func<T, object>>[] includeProperties)
@@ -77,12 +81,12 @@ namespace EFGeneric.Repository
 
         public virtual void Edit(T entity)
         {
-            T t = _entities.Set<T>().AsNoTracking().FirstOrDefault(en => en.Id == entity.Id);
-            if (t == null)
-                throw new ObjectNotFoundException();
+            //T t = _entities.Set<T>().AsNoTracking().FirstOrDefault(en => en.Id.Equals(entity.Id));
+            //if (t == null)
+            //    throw new ObjectNotFoundException();
 
-            _entities.Entry(t).State = EntityState.Detached;
-            Save();
+            //_entities.Entry(t).State = EntityState.Detached;
+            //Save();
         }
 
         public virtual void Upsert(T entity, Func<T, bool> insertExpression)
