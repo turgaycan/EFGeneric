@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Data.Entity;
+using EFGeneric.Base.Entity;
+using EFGeneric.Base.Entity.Core;
 
 namespace EFGeneric.Context
 {
     /// <summary>
     /// Store Custom Entity Context
     /// </summary>
-    public interface IEntityContext : IDisposable
+    public interface IEntityContext<PK> : IDisposable
     {
-        IDbSet<TEntity> Set<TEntity>() where TEntity : class;
-        void SetAsAdded<TEntity>(TEntity entity) where TEntity : class;
-        void SetAsModified<TEntity>(TEntity entity) where TEntity : class;
-        void SetAsDeleted<TEntity>(TEntity entity) where TEntity : class;
-        int SaveChanges();
+        IDbSet<TEntity> Set<TEntity>() where TEntity : BaseEntity<PK>;
+        void SetAsAdded<TEntity>(TEntity entity) where TEntity : BaseEntity<PK>;
+        void SetAsModified<TEntity>(TEntity entity) where TEntity : BaseEntity<PK>;
+        void SetAsDeleted<TEntity>(TEntity entity) where TEntity : BaseEntity<PK>;
+        int Commit();
     }
 }

@@ -1,8 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Entity;
+using System.Data.Entity.Core;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using EFGeneric.Base.Entity;
 using EFGeneric.Base.Repository;
+using EFGeneric.Base.Util;
+using EFGeneric.Context;
 
 namespace EFGeneric.Repository
 {
@@ -11,13 +17,12 @@ namespace EFGeneric.Repository
     /// </summary>
     /// <typeparam name="C">Db/Object Context</typeparam>
     /// <typeparam name="T">Entity</typeparam>
-    /// <typeparam name="TId">Id (BigInt, Int)</typeparam>
-    public abstract class AbstractRepository<C, T> : IBaseRepository<T>, IDisposable
-        where C : DbContext, new()
-        where T : class
+    public abstract class AbstractRepository<C, T, PK> : IBaseRepository<T, PK>
+        where C : EntityContext<PK>, new()
+        where T : BaseEntity<PK>
     {
         private C _entities = Activator.CreateInstance<C>();
-        private bool disposed = false;
+        private bool disposed;
 
         protected C Context
         {
@@ -39,9 +44,82 @@ namespace EFGeneric.Repository
             }
         }
 
-        public virtual T FindById(object id)
+        public virtual IQueryable<T> GetAll()
         {
-            return GetAll().SingleOrDefault(entity => entity.Equals(id));
+            return _entities.Set<T>();
+        }
+
+
+        public virtual IQueryable<T> CurrentSession
+        {
+            get
+            {
+                return GetCurrentSession();
+            }
+        }
+
+        protected IQueryable<T> GetCurrentSession()
+        {
+            var query = GetAll();
+            var isDeletedExists = typeof(T).GetProperty("IsDeleted");
+
+            if (isDeletedExists != null)
+            {
+                query = query.Where(PredicateExtensions.EqualOrAddNullValueCondition<T>("IsDeleted", false));
+            }
+
+            return query;
+        }
+
+        
+
+        /// <summary>
+        /// IMPORTANT!! USE ONLY ENTITIES DERIVED FROM BASEENTITY<T>
+        /// </summary>
+        /// <param name="id">Entity that is derived from BaseEntity<object></object></param>
+        /// <returns></returns>
+        public virtual T FindById(PK id)
+        {
+            return GetCurrentSession().First(PredicateExtensions.Equal<T>("Id", id));
+        }
+
+        public IQueryable<T> FindByIds(List<T> entities)
+        {
+            //use for this extension utils..
+            throw new NotImplementedException();
+        }
+
+
+        /// <summary>
+        /// //do implementation sub class!
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public virtual T Merge(T entity)
+        {
+
+            if (entity == null)
+            {
+                throw new ObjectNotFoundException();
+            }
+
+            if (entity.IsNotPersisted())
+            {
+                Add(entity);
+                return entity;
+            }
+
+            T t = FindById(entity.Id);
+            if (t == null)
+            {
+                throw new ObjectNotFoundException();
+            }
+
+            _entities.Entry(t).State = EntityState.Detached;
+
+            Commit();
+
+            return t;
         }
 
         public virtual IQueryable<T> AllIncluding(params Expression<Func<T, object>>[] includeProperties)
@@ -50,11 +128,6 @@ namespace EFGeneric.Repository
             return queryable;
             //return includeProperties.Aggregate(queryable, (current, expression) => (IQueryable<T>)QueryableExtensions.Include<T, object>((IQueryable<T>)current,
             //    (Expression<Func<T, T>>)expression));
-        }
-
-        public virtual IQueryable<T> GetAll()
-        {
-            return _entities.Set<T>();
         }
 
         public virtual T Find(params object[] keyValues)
@@ -70,23 +143,42 @@ namespace EFGeneric.Repository
         public virtual void Add(T entity)
         {
             _entities.Set<T>().Add(entity);
-            Save();
+            Commit();
         }
 
         public virtual void Delete(T entity)
         {
             _entities.Set<T>().Remove(entity);
-            Save();
+            Commit();
         }
 
-        public virtual void Edit(T entity)
+        public void SoftDelete(T entity)
         {
-            //T t = _entities.Set<T>().AsNoTracking().FirstOrDefault(en => en.Id.Equals(entity.Id));
-            //if (t == null)
-            //    throw new ObjectNotFoundException();
+            if (entity.IsPersisted() && entity.GetType().GetProperty("IsDeleted") != null)
+            {
+                entity.GetType().GetProperty("IsDeleted").SetValue(entity, true);
+                Update(entity);
+            }
+            else
+            {
+                throw new InvalidOperationException("This entity type does not support soft deletion." +
+                                                    " Please add a bool? property called IsDeleted and try again.");
+            }
 
-            //_entities.Entry(t).State = EntityState.Detached;
-            //Save();
+        }
+
+        public virtual void Update(T entity, bool nonsecure = true)
+        {
+            if (!nonsecure)
+            {
+                entity = _entities.Set<T>().Find(entity);
+                if (entity == null)
+                    throw new ObjectNotFoundException();
+
+            }
+            _entities.Entry(entity).State = EntityState.Detached;
+
+            Commit();
         }
 
         public virtual void Upsert(T entity, Func<T, bool> insertExpression)
@@ -94,12 +186,12 @@ namespace EFGeneric.Repository
             if (insertExpression(entity))
                 Add(entity);
             else
-                Edit(entity);
+                Update(entity);
 
-            Save();
+            Commit();
         }
 
-        public virtual void Save()
+        public virtual void Commit()
         {
             _entities.SaveChanges();
         }

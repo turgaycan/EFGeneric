@@ -51,11 +51,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\Entity\BaseDEntity.cs" />
     <Compile Include="Base\Entity\BaseEntity.cs" />
-    <Compile Include="Base\Entity\IEntity.cs" />
+    <Compile Include="Base\Entity\Audit\AuditableEntity.cs" />
+    <Compile Include="Base\Entity\Audit\IAuditableEntity.cs" />
+    <Compile Include="Base\Entity\Core\IDeletable.cs" />
+    <Compile Include="Base\Entity\Core\IEntity.cs" />
     <Compile Include="Base\Repository\IBaseRepository.cs" />
     <Compile Include="Base\Util\PaginatedList.cs" />
-    <Compile Include="Base\Util\QueryableExtensions.cs" />
+    <Compile Include="Base\Util\PredicateExtensions.cs" />
+    <Compile Include="Base\Util\QueryUtil.cs" />
     <Compile Include="Context\EntityContext.cs" />
     <Compile Include="Context\IEntityContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

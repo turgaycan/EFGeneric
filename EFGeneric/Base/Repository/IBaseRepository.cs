@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
 namespace EFGeneric.Base.Repository
 {
 
-    public interface IBaseRepository<T> : IDisposable
+    public interface IBaseRepository<T, PK> : IDisposable
     {
         IQueryable<T> All { get; }
+
+        IQueryable<T> CurrentSession { get; }
 
         void Upsert(T entity, Func<T, bool> insertExpression);
 
@@ -23,8 +26,15 @@ namespace EFGeneric.Base.Repository
 
         void Delete(T entity);
 
-        void Edit(T entity);
+        void SoftDelete(T entity);
 
-        void Save();
+        void Update(T entity, bool nonsecure = true);
+
+        T Merge(T entity);
+
+        T FindById(PK id);
+
+        IQueryable<T> FindByIds(List<T> entities);
+
     }
 }

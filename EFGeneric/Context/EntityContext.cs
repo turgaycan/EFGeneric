@@ -1,11 +1,16 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity.Infrastructure;
+using System.Linq;
+using System.Threading;
+using EFGeneric.Base.Entity;
+using EFGeneric.Base.Entity.Audit;
 
 namespace EFGeneric.Context
 {
-    public abstract class EntityContext : DbContext, IEntityContext
+    public abstract class EntityContext<PK> : DbContext, IEntityContext<PK>
     {
 
         /// <summary>
@@ -105,40 +110,91 @@ namespace EFGeneric.Context
         {
         }
 
-        public new IDbSet<TEntity> Set<TEntity>() where TEntity : class
+        /// <summary>
+        /// Traditional way of execute SQL Command
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="parameters"></param>
+        public void ExecuteCommand(string command, params object[] parameters)
         {
-            return base.Set<TEntity>();
+            Database.ExecuteSqlCommand(command, parameters);
         }
 
-        public void SetAsAdded<TEntity>(TEntity entity) where TEntity : class
+        public new IDbSet<T> Set<T>() where T : BaseEntity<PK>
         {
+            return base.Set<T>();
+        }
 
+        public void SetAsAdded<T>(T entity) where T : BaseEntity<PK>
+        {
             DbEntityEntry dbEntityEntry = GetDbEntityEntrySafely(entity);
             dbEntityEntry.State = EntityState.Added;
         }
 
-        public void SetAsModified<TEntity>(TEntity entity) where TEntity : class
+        public void SetAsModified<T>(T entity) where T : BaseEntity<PK>
         {
-
             DbEntityEntry dbEntityEntry = GetDbEntityEntrySafely(entity);
             dbEntityEntry.State = EntityState.Modified;
         }
 
-        public void SetAsDeleted<TEntity>(TEntity entity) where TEntity : class
+        public void SetAsDeleted<T>(T entity) where T : BaseEntity<PK>
         {
-
             DbEntityEntry dbEntityEntry = GetDbEntityEntrySafely(entity);
             dbEntityEntry.State = EntityState.Deleted;
         }
 
-        private DbEntityEntry GetDbEntityEntrySafely<TEntity>(TEntity entity) where TEntity : class
+        public int Commit()
+        {
+            return SaveChanges();
+        }
+
+        /// <summary>
+        /// CRUD işlemlerinde Commit() metodu çağrılmaktadır.. 
+        /// Commit metodu ile birlikte Audit sınıflar için çalışır!
+        /// </summary>
+        /// <returns></returns>
+        public override int SaveChanges()
+        {
+            var modifiedEntries = ChangeTracker.Entries()
+                .Where(e => e.Entity is IAuditableEntity
+                    && (e.State == EntityState.Added || e.State == EntityState.Modified));
+
+            foreach (var entry in modifiedEntries)
+            {
+                IAuditableEntity entity = entry.Entity as IAuditableEntity;
+                if (entity == null)
+                {
+                    continue;
+                }
+
+                string identityName = Thread.CurrentPrincipal.Identity.Name;
+                DateTime now = DateTime.UtcNow;
+
+                if (entry.State == EntityState.Added)
+                {
+                    entity.CreatedBy = identityName;
+                    entity.CreatedDate = now;
+                }
+                else
+                {
+                    Entry(entity).Property(x => x.CreatedBy).IsModified = false;
+                    Entry(entity).Property(x => x.CreatedDate).IsModified = false;
+                }
+
+                entity.UpdatedBy = identityName;
+                entity.UpdatedDate = now;
+            }
+
+            return base.SaveChanges();
+        }
+
+        private DbEntityEntry GetDbEntityEntrySafely<T>(T entity) where T : BaseEntity<PK>
         {
 
-            DbEntityEntry dbEntityEntry = base.Entry<TEntity>(entity);
+            DbEntityEntry dbEntityEntry = Entry(entity);
             if (dbEntityEntry.State == EntityState.Detached)
             {
-
-                Set<TEntity>().Attach(entity);
+                Set<T>().Attach(entity);
             }
 
             return dbEntityEntry;
