@@ -80,7 +80,7 @@ namespace EFGeneric.Repository
         /// <returns></returns>
         public virtual T FindById(PK id)
         {
-            return GetCurrentSession().First(PredicateExtensions.Equal<T>("Id", id));
+            return GetCurrentSession().FirstOrDefault(PredicateExtensions.Equal<T>("Id", id));
         }
 
         public IQueryable<T> FindByIds(List<T> entities)
